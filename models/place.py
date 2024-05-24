@@ -3,8 +3,6 @@
 from sqlalchemy import Table, Column, Integer
 from sqlalchemy import Float, String, ForeignKey, MetaData
 from sqlalchemy.orm import relationship, backref
-from AirBnB_clone_v2.models.amenity import Amenity
-from AirBnB_clone_v2.models.review import Review
 import models
 from models.base_model import BaseModel, Base
 from os import environ
