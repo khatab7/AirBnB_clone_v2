@@ -67,8 +67,7 @@ class DBStorage:
 
     def new(self, obj):
         """ add the object to the current database session """
-        if obj:
-            self.__session.add(obj)
+        self.__session.add(obj)
 
     def save(self):
         """ commit all changes of the current database session """
@@ -77,8 +76,7 @@ class DBStorage:
     def delete(self, obj=None):
         """ delete from module import symbol
         the current database session obj if not None """
-        if obj:
-            self.__session.delete(obj)
+        self.__session.delete(obj)
 
     def reload(self):
         """
@@ -90,8 +88,10 @@ class DBStorage:
         Session = scoped_session(session_factory)
         self.__session = Session()
 
+    """
     def close(self):
-        """
+        
         Closes Session
-        """
+        
         self.__session.close()
+    """
