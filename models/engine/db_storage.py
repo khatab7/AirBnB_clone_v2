@@ -2,7 +2,7 @@
 """This is the file storage class for AirBnB"""
 
 #from models.base_model import Base
-import models.base_model
+from models.base_model import Base, BaseModel
 from models.user import User
 from models.state import State
 from models.city import City
@@ -10,11 +10,10 @@ from models.amenity import Amenity
 from models.place import Place
 from models.review import Review
 
-from sqlalchemy import (create_engine)
-from sqlalchemy.orm import scoped_session
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy import create_engine
+from sqlalchemy.orm import scoped_session, sessionmaker
 
-from os import environ
+from os import getenv
 
 
 class DBStorage:
@@ -25,18 +24,17 @@ class DBStorage:
     def __init__(self):
         """ Constructor """
 
-        sqlUser = environ.get('HBNB_MYSQL_USER')
-        sqlPwd = environ.get('HBNB_MYSQL_PWD')
-        sqlHost = environ.get('HBNB_MYSQL_HOST')
-        sqlDb = environ.get('HBNB_MYSQL_DB')
-        sqlEnv = environ.get('HBNB_ENV')
+        username = getenv('HBNB_MYSQL_USER')
+        password = getenv('HBNB_MYSQL_PWD')
+        host = getenv('HBNB_MYSQL_HOST')
+        db_name = getenv('HBNB_MYSQL_DB')
 
-        self.__engine = create_engine('mysql+mysqldb://{}:{}@{}/{}'.
-                                      format(sqlUser, sqlPwd, sqlHost, sqlDb),
-                                      pool_pre_ping=True)
+        db_url = "mysql+mysqldb://{}:{}@{}/{}".format(username, password, host, db_name)
 
-        if sqlEnv == "test":
-            models.base_model.Base.metadata.drop_all(bind=self.__engine)
+        self.__engine = create_engine(db_url, pool_pre_ping=True)
+
+        if getenv('HBNB_ENV') == "test":
+            Base.metadata.drop_all(self.__engine)
 
     def all(self, cls=None):
         """
@@ -45,24 +43,27 @@ class DBStorage:
         """
 
         session = self.__session
-        dic = {}
-        if not cls:
-            tables = [User, State, City, Amenity, Place, Review]
-
+        ob_list = []
+        if cls:
+            if isinstance(cls, str):
+                try:
+                    globals()[cls]
+                except KeyError:
+                    pass
+            if issubclass(cls, Base):
+                ob_list = self.__session.query(cls).all()
         else:
-            if type(cls) == str:
-                cls = eval(cls)
-
-            tables = [cls]
-
-        for t in tables:
-            query = session.query(t).all()
-
-            for rows in query:
-                key = "{}.{}".format(type(rows).__name__, rows.id)
-                dic[key] = rows
-
-        return dic
+            for sub in Base.__subclasses__():
+                ob_list.extend(self.__session.query(sub).all())
+        ob_dict = {}
+        for obj in ob_list:
+            key = "{}.{}".format(obj.__class__.__name__, obj.id)
+            try:
+                del obj._sa_instance_state
+                ob_dict[key] = obj
+            except Exception:
+                pass
+        return ob_dict
 
     def new(self, obj):
         """ add the object to the current database session """
@@ -84,9 +85,8 @@ class DBStorage:
         creates all tables in the database
         creates the current database session
         """
-        models.base_model.Base.metadata.create_all(self.__engine)
-        session_factory = sessionmaker(bind=self.__engine,
-                                       expire_on_commit=False)
+        Base.metadata.create_all(self.__engine)
+        session_factory = sessionmaker(bind=self.__engine, expire_on_commit=False)
         Session = scoped_session(session_factory)
         self.__session = Session()
 
