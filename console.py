@@ -125,20 +125,21 @@ class HBNBCommand(cmd.Cmd):
         elif cls_name not in HBNBCommand.classes:
             print("** class doesn't exist **")
             return
-        
+
         all_list = args.split(" ")
+
         new_inst = eval(cls_name)()
 
         for i in range(1, len(all_list)):
             key, value = tuple(all_list[i].split("="))
             if value.startswith('"'):
-                    value = value.strip('"').replace("_", " ")
+                value = value.strip('"').replace("_", " ")
             else:
-                    try:
-                        value = eval(value)
-                    except Exception:
-                        print(f"couldnt evaluat {value}")
-                        pass
+                try:
+                    value = eval(value)
+                except Exception:
+                    print(f"**couldnt evaluat {value}")
+                    pass
             if hasattr(new_inst, key):
                 setattr(new_inst, key, value)
 
