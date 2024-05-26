@@ -6,7 +6,7 @@ from models.amenity import Amenity
 from sqlalchemy import Column, String, Integer, Float, ForeignKey, Table
 from sqlalchemy.orm import relationship
 from os import getenv
-from models import storage
+import models
 
 
 place_amenity = Table('place_amenity', Base.metadata,
@@ -44,7 +44,7 @@ class Place(BaseModel, Base):
         def reviews(self):
             """Return the list of reviews"""
             list_reviews = []
-            for value in storage.all(Review).values():
+            for value in models.storage.all(Review).values():
                 if value.place_id == self.id:
                     list_reviews.append(value)
             return list_reviews
@@ -53,7 +53,7 @@ class Place(BaseModel, Base):
         def amenities(self):
             """Return the list of amenities"""
             list_amenities = []
-            for value in storage.all(Amenity).values():
+            for value in models.storage.all(Amenity).values():
                 if value.place_id == self.id:
                     list_amenities.append(value)
             return list_amenities
