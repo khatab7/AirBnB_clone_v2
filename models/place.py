@@ -4,7 +4,7 @@ from sqlalchemy import Column, String, Integer, Float, ForeignKey
 from models.base_model import BaseModel, Base
 from sqlalchemy.orm import relationship
 from models.review import Review
-from models import storage
+import models
 from os import getenv
 
 
@@ -32,7 +32,7 @@ class Place(BaseModel, Base):
         def reviews(self):
             """Return the list of reviews"""
             list_reviews = []
-            for value in storage.all(Review).values():
+            for value in models.storage.all(Review).values():
                 if value.place_id == self.id:
                     list_reviews.append(value)
             return list_reviews
