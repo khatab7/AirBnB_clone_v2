@@ -10,4 +10,9 @@ class Amenity(BaseModel, Base):
 
     __tablename__ = 'amenities'
     name = Column(String(128), nullable=False)
+<<<<<<< HEAD
     place_amenity = relationship('Place', secondary='place_amenity', viewonly=True)
+=======
+    place_amenity = relationship('Place', secondary='place_amenity',
+                                  viewonly=True)
+>>>>>>> ec2736b9637a31640e1d16711a852b1eda308300
