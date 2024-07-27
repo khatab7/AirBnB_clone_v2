@@ -1,32 +1,82 @@
 #!/usr/bin/python3
-"""
-Deletes out-of-date archives
-fab -f 100-clean_web_static.py do_clean:number=2
-    -i ssh-key -u ubuntu > /dev/null 2>&1
-"""
 
+from fabric.operations import local
+from fabric.operations import put
+from fabric.operations import run
+from fabric.api import env
+from fabric.api import hosts
+from fabric.api import runs_once
+import fabric
+from datetime import datetime
 import os
-from fabric.api import *
 
-env.hosts = ['100.24.74.180', '52.86.119.1']
+
+@runs_once
+def do_pack():
+    """Pack web_static folder for future deployment"""
+    filename = "versions/web_static_{}.tgz".format(
+        datetime.now().strftime("%Y%m%d%H%M%S"))
+    local("mkdir -p versions")
+    result = local("tar -czvf {} web_static".format(filename))
+    if result.failed is True:
+        return None
+    else:
+        return filename
+
+
+env.hosts = ['54.167.41.249', '54.160.234.222']
+
+
+def do_deploy(archive_path):
+    """Deploy given archive to web server"""
+    if os.path.exists(archive_path) is False:
+        return False
+    filename = os.path.basename(archive_path)
+    result = put(archive_path, '/tmp/{}'.format(filename))
+    if result.failed is True:
+        return False
+    result = run("mkdir -p /data/web_static/releases/{}/"
+                 .format(filename[:-4]))
+    if result.failed is True:
+        return False
+    result = run(("tar -xzf /tmp/" +
+                  "{} -C /data/web_static/releases/{}/" +
+                  " --strip-components=1").format(filename, filename[:-4]))
+    if result.failed is True:
+        return False
+    result = run("rm /tmp/{}".format(filename))
+    if result.failed is True:
+        return False
+    result = run("rm -rf /data/web_static/current")
+    if result.failed is True:
+        return False
+    result = run("ln -s /data/web_static/releases/"
+                 "{}/ /data/web_static/current".format(filename[:-4]))
+    if result.failed is True:
+        return False
+    print("New version deployed!")
+    return True
+
+
+def deploy():
+    """Pack web_static and deploy it"""
+    filename = do_pack()
+    if filename is None:
+        return False
+    return do_deploy(filename)
+
 
 def do_clean(number=0):
-    """Delete out-of-date archives.
-    Args:
-        number (int): The number of archives to keep.
-    If number is 0 or 1, keeps only the most recent archive. If
-    number is 2, keeps the most and second-most recent archives,
-    etc.
-    """
-    number = 1 if int(number) == 0 else int(number)
-
-    archives = sorted(os.listdir("versions"))
-    [archives.pop() for i in range(number)]
-    with lcd("versions"):
-        [local("rm ./{}".format(a)) for a in archives]
-
-    with cd("/data/web_static/releases"):
-        archives = run("ls -tr").split()
-        archives = [a for a in archives if "web_static_" in a]
-        [archives.pop() for i in range(number)]
-        [run("rm -rf ./{}".format(a)) for a in archives]
+    """Clean files from current repo and servers"""
+    n = int(number)
+    if n == 0:
+        n = 1
+    files = local("ls -1t versions", capture=True)
+    files_list = files.stdout.splitlines()[n:]
+    for elem in files_list:
+        local("rm -rf versions/{}".format(elem))
+    files = run("ls -1t /data/web_static/releases")
+    files_list = files.splitlines()[n:]
+    for elem in files_list:
+        filepath = elem
+        run("rm -rf /data/web_static/releases/{}".format(filepath))
