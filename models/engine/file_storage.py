@@ -18,12 +18,8 @@ class FileStorage:
         from models.amenity import Amenity
         from models.review import Review
 
-        classes = {
-                    'BaseModel': BaseModel, 'User': User, 'Place': Place,
-                    'State': State, 'City': City, 'Amenity': Amenity,
-                    'Review': Review
-                  }
-
+        classes = {"Amenity": Amenity, "BaseModel": BaseModel, "City": City,
+           "Place": Place, "Review": Review, "State": State, "User": User}
         if cls is None:
             return FileStorage.__objects
         else:
@@ -56,11 +52,9 @@ class FileStorage:
         from models.city import City
         from models.amenity import Amenity
         from models.review import Review
-        classes = {
-                    'BaseModel': BaseModel, 'User': User, 'Place': Place,
-                    'State': State, 'City': City, 'Amenity': Amenity,
-                    'Review': Review
-                  }
+        classes = {"Amenity": Amenity, "BaseModel": BaseModel, "City": City,
+           "Place": Place, "Review": Review, "State": State, "User": User}
+
         try:
             temp = {}
             with open(FileStorage.__file_path, 'r') as f:
