@@ -76,7 +76,8 @@ class DBStorage:
     def delete(self, obj=None):
         """ delete from module import symbol
         the current database session obj if not None """
-        self.__session.delete(obj)
+        if obj is not None:
+            self.__session.delete(obj)
 
     def reload(self):
         """
